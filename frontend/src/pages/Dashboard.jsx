@@ -71,6 +71,12 @@ const styles = `
   .prov-input::placeholder { color: rgba(255,255,255,0.2); }
   .mov-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .mov-select { background: #1c1c26; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #e8e8f0; font-family: "DM Mono", monospace; font-size: 13px; padding: 10px 14px; outline: none; }
+  .alerta-stock { background: rgba(255,94,108,0.08); border: 1px solid rgba(255,94,108,0.2); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #ff5e6c; line-height: 1.8; }
+  .alerta-stock h4 { font-family: "Syne",sans-serif; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .filtro-fecha { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); align-items: center; }
+  .filtro-fecha label { font-size: 11px; color: #6b6b80; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  .filtro-fecha input { background: #1c1c26; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #e8e8f0; font-family: "DM Mono",monospace; font-size: 13px; padding: 8px 12px; outline: none; }
+  .filtro-fecha input:focus { border-color: #6c63ff; }
   .chart-card { background: #13131a; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
   .chart-card h3 { font-family: "Syne",sans-serif; font-size: 14px; font-weight: 600; color: #e8e8f0; margin-bottom: 4px; }
   .chart-card p { font-size: 11px; color: #6b6b80; margin-bottom: 14px; }
@@ -109,11 +115,23 @@ const styles = `
   .chat-send { background: #6c63ff; border: none; border-radius: 8px; color: #fff; cursor: pointer; padding: 8px 12px; font-size: 14px; transition: background .2s; }
   .chat-send:hover { background: #7c74ff; }
   @media print {
-    .sidebar, .chatbot, .table-actions, .toast, .search-bar { display: none !important; }
-    .dash-main { margin-left: 0; padding: 16px; }
-    body { background: #fff; color: #000; }
-    table { color: #000; }
-    thead th, tbody td { color: #000; border-color: #ccc; }
+    .sidebar, .chatbot, .table-actions, .toast, .search-bar, .stats-grid { display: none !important; }
+    .dash-main { margin-left: 0 !important; padding: 16px !important; }
+    body { background: #fff !important; color: #000 !important; }
+    .dash-root { background: #fff !important; }
+    .table-section { background: #fff !important; border: 1px solid #ccc !important; border-radius: 0 !important; }
+    .table-header { border-bottom: 2px solid #000 !important; padding: 8px 12px !important; }
+    .table-header h2 { color: #000 !important; font-size: 16px !important; }
+    table { color: #000 !important; width: 100% !important; }
+    thead th { color: #000 !important; border-bottom: 1px solid #000 !important; padding: 8px !important; font-size: 11px !important; }
+    tbody tr { border-bottom: 1px solid #ddd !important; }
+    tbody td { color: #000 !important; padding: 7px 8px !important; font-size: 11px !important; }
+    tbody td input { color: #000 !important; border: none !important; background: transparent !important; font-size: 11px !important; }
+    .badge { border: 1px solid #999 !important; color: #000 !important; background: #eee !important; }
+    .dash-header h1 { color: #000 !important; font-size: 18px !important; }
+    .dash-header p { color: #555 !important; }
+    .btn-danger { display: none !important; }
+    @page { margin: 1cm; }
   }
 `;
 
@@ -232,9 +250,10 @@ export default function Dashboard() {
     { id:2, fecha:"2026-03-12", producto:"Ryzen 5 5600GT",        tipo:"Salida",  cantidad:2, costo:569,  responsable:"Admin" },
   ]);
   const [nuevoMov, setNuevoMov] = useState({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
-
-  useEffect(() => {
-    const cargar = async () => {
+  const [filtroFecha,   setFiltroFecha]   = useState({ desde:"", hasta:"" });
+  const STOCK_MINIMO = 5;
+useEffect(() => {
+    const cargarProductos = async () => {
       try {
         const res  = await fetch(`${API}/api/excel/productos`, { headers:{ Authorization:`Bearer ${token}` } });
         const data = await res.json();
@@ -250,7 +269,26 @@ export default function Dashboard() {
         }
       } catch { console.log("Sin productos en BD"); }
     };
-    cargar();
+ 
+    const cargarMovimientos = async () => {
+      try {
+        const res  = await fetch(`${API}/api/movimientos`, { headers:{ Authorization:`Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.movimientos?.length) setMovimientos(data.movimientos);
+      } catch { console.log("Sin movimientos en BD"); }
+    };
+ 
+    const cargarProveedores = async () => {
+      try {
+        const res  = await fetch(`${API}/api/proveedores`, { headers:{ Authorization:`Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.proveedores?.length) setProveedores(data.proveedores);
+      } catch { console.log("Sin proveedores en BD"); }
+    };
+ 
+    cargarProductos();
+    cargarMovimientos();
+    cargarProveedores();
   }, [token]);
 
   const showToast = (msg, tipo="ok") => { setToast({msg,tipo}); setTimeout(()=>setToast(null),4000); };
@@ -326,19 +364,60 @@ export default function Dashboard() {
   }
 };
 
-  const agregarProveedor = () => {
-    if (!nuevoProv.nombre) return;
-    setProveedores([...proveedores, {...nuevoProv, id:Date.now()}]);
-    setNuevoProv({ nombre:"", producto:"", precio:"", entrega:"", contacto:"" });
-    showToast("✅ Proveedor agregado");
-  };
+  const agregarProveedor = async () => {
+  if (!nuevoProv.nombre) return;
+  try {
+    const res = await fetch(`${API}/api/proveedores/agregar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(nuevoProv)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setProveedores([...proveedores, { ...nuevoProv, id: data.id }]);
+      setNuevoProv({ nombre:"", producto:"", precio:"", entrega:"", contacto:"" });
+      showToast("✅ Proveedor agregado");
+    } else {
+      showToast("❌ Error: " + data.message, "error");
+    }
+  } catch {
+    showToast("❌ Error al conectar", "error");
+  }
+};  
 
-  const agregarMovimiento = () => {
-    if (!nuevoMov.producto || !nuevoMov.cantidad) return;
-    setMovimientos([...movimientos, {...nuevoMov, id:Date.now(), cantidad:Number(nuevoMov.cantidad), costo:Number(nuevoMov.costo)}]);
-    setNuevoMov({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
-    showToast("✅ Movimiento registrado");
-  };
+  const eliminarProveedor = async (id) => {
+    try {
+      const res = await fetch(`${API}/api/proveedores/${id}`, { method:"DELETE", headers:{ Authorization:`Bearer ${token}` } });
+    if (res.ok) { setProveedores(proveedores.filter(p=>p.id!==id)); showToast("🗑 Proveedor eliminado"); }
+  } catch { showToast("❌ Error al eliminar","error"); }
+};
+
+  const agregarMovimiento = async () => {
+  if (!nuevoMov.producto || !nuevoMov.cantidad) return;
+  try {
+    const res = await fetch(`${API}/api/movimientos/agregar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(nuevoMov)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setMovimientos([...movimientos, { ...nuevoMov, id: data.id, cantidad: Number(nuevoMov.cantidad), costo: Number(nuevoMov.costo) }]);
+      setNuevoMov({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
+      showToast("✅ Movimiento registrado");
+    } else {
+      showToast("❌ Error: " + data.message, "error");
+    }
+  } catch {
+    showToast("❌ Error al conectar", "error");
+  }
+};
 
   const botRespuestas = {
     "hola":       "¡Hola! Soy el asistente de Eagle Gaming 🎮 ¿En qué te ayudo?",
@@ -359,6 +438,18 @@ export default function Dashboard() {
   };
 
   const categoriasList = ["Todas", ...new Set(datos.map(d=>d.categoria))];
+  // Movimientos filtrados por fecha
+  const movimientosFiltrados = movimientos.filter(m => {
+    if (!filtroFecha.desde && !filtroFecha.hasta) return true;
+    const fecha = m.fecha || "";
+    if (filtroFecha.desde && fecha < filtroFecha.desde) return false;
+    if (filtroFecha.hasta && fecha > filtroFecha.hasta) return false;
+    return true;
+  });
+  
+  // Alertas de stock minimo
+  const productosStockBajo = datos.filter(d => (d.stock||0) <= STOCK_MINIMO && (d.stock||0) >= 0);
+  
   const datosFiltrados = datos.filter(d => {
     const matchCat = filtrocat==="Todas" || d.categoria===filtrocat;
     const matchQ   = busqueda==="" || (d.modelo||"").toLowerCase().includes(busqueda.toLowerCase()) || (d.marca||"").toLowerCase().includes(busqueda.toLowerCase()) || (d.categoria||"").toLowerCase().includes(busqueda.toLowerCase());
@@ -503,33 +594,49 @@ export default function Dashboard() {
 
           {/* ── ENTRADAS Y SALIDAS ── */}
           {seccion==="entradas" && (
-            <div className="table-section">
-              <div className="table-header">
-                <h2>Registro de movimientos</h2>
-                <div className="table-actions"><button className="btn btn-print" onClick={handlePrint}>🖨 Imprimir</button></div>
-              </div>
-              <div className="mov-form">
-                <input className="prov-input" placeholder="Fecha" value={nuevoMov.fecha} onChange={e=>setNuevoMov({...nuevoMov,fecha:e.target.value})}/>
-                <input className="prov-input" placeholder="Producto" value={nuevoMov.producto} onChange={e=>setNuevoMov({...nuevoMov,producto:e.target.value})}/>
-                <select className="mov-select" value={nuevoMov.tipo} onChange={e=>setNuevoMov({...nuevoMov,tipo:e.target.value})}><option>Entrada</option><option>Salida</option></select>
-                <input className="prov-input" placeholder="Cantidad" type="number" value={nuevoMov.cantidad} onChange={e=>setNuevoMov({...nuevoMov,cantidad:e.target.value})}/>
-                <input className="prov-input" placeholder="Costo S/" type="number" value={nuevoMov.costo} onChange={e=>setNuevoMov({...nuevoMov,costo:e.target.value})}/>
-                <input className="prov-input" placeholder="Responsable" value={nuevoMov.responsable} onChange={e=>setNuevoMov({...nuevoMov,responsable:e.target.value})}/>
-                <button className="btn btn-primary" style={{gridColumn:"1/-1"}} onClick={agregarMovimiento}>+ Registrar movimiento</button>
-              </div>
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Costo S/</th><th>Responsable</th></tr></thead>
-                  <tbody>
-                    {movimientos.map(m=>(
-                      <tr key={m.id}>
+            <div>
+              {productosStockBajo.length > 0 && (
+                <div className="alerta-stock">
+                  <h4>⚠️ Alerta de stock mínimo — {productosStockBajo.length} productos</h4>
+                  {productosStockBajo.map(p => (
+                    <div key={p.id}>• {p.categoria} — {p.modelo} — Stock: {p.stock} unidades</div>
+                    ))}
+                    </div>
+                  )}
+                  <div className="table-section">
+                    <div className="table-header">
+                      <h2>Registro de movimientos ({movimientosFiltrados.length})</h2>
+                      <div className="table-actions"><button className="btn btn-print" onClick={handlePrint}>🖨 Imprimir</button></div>
+                      </div>
+                      <div className="mov-form">
+                        <input className="prov-input" placeholder="Fecha (ej: 2026-03-18)" value={nuevoMov.fecha} onChange={e=>setNuevoMov({...nuevoMov,fecha:e.target.value})}/>
+                        <input className="prov-input" placeholder="Producto" value={nuevoMov.producto} onChange={e=>setNuevoMov({...nuevoMov,producto:e.target.value})}/>
+                        <select className="mov-select" value={nuevoMov.tipo} onChange={e=>setNuevoMov({...nuevoMov,tipo:e.target.value})}><option>Entrada</option><option>Salida</option></select>
+                        <input className="prov-input" placeholder="Cantidad" type="number" value={nuevoMov.cantidad} onChange={e=>setNuevoMov({...nuevoMov,cantidad:e.target.value})}/>
+                        <input className="prov-input" placeholder="Costo S/" type="number" value={nuevoMov.costo} onChange={e=>setNuevoMov({...nuevoMov,costo:e.target.value})}/>
+                        <input className="prov-input" placeholder="Responsable" value={nuevoMov.responsable} onChange={e=>setNuevoMov({...nuevoMov,responsable:e.target.value})}/>
+                        <button className="btn btn-primary" style={{gridColumn:"1/-1"}} onClick={agregarMovimiento}>+ Registrar movimiento</button>
+                        </div>
+                        <div className="filtro-fecha">
+                        <label>Filtrar por fecha:</label>
+                         <input type="date" value={filtroFecha.desde} onChange={e=>setFiltroFecha({...filtroFecha,desde:e.target.value})}/>
+                        <label>hasta</label>
+                         <input type="date" value={filtroFecha.hasta} onChange={e=>setFiltroFecha({...filtroFecha,hasta:e.target.value})}/>
+                        <button className="btn btn-outline" onClick={()=>setFiltroFecha({desde:"",hasta:""})}>✕ Limpiar</button>
+                   </div>
+                   <div className="table-wrap">
+                    <table>
+                        <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Costo S/</th><th>Responsable</th></tr></thead>
+                    <tbody>
+                      {movimientosFiltrados.map((m,i)=>(<tr key={m.id||i}>
                         <td>{m.fecha}</td><td>{m.producto}</td>
                         <td><span className={`badge ${m.tipo==="Entrada"?"badge-monitor":"badge-gpu"}`}>{m.tipo}</span></td>
-                        <td>{m.cantidad}</td><td>S/ {(m.costo||0).toLocaleString()}</td><td>{m.responsable}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        <td>{m.cantidad}</td><td>S/ {(Number(m.costo)||0).toLocaleString()}</td><td>{m.responsable}</td>
+                        </tr>
+                       ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -551,14 +658,15 @@ export default function Dashboard() {
               </div>
               <div className="table-wrap">
                 <table>
-                  <thead><tr><th>#</th><th>Proveedor</th><th>Producto</th><th>Precio</th><th>Entrega</th><th>Contacto</th></tr></thead>
+                  <thead><tr><th>#</th><th>Proveedor</th><th>Producto</th><th>Precio</th><th>Entrega</th><th>Contacto</th><th>Acción</th></tr></thead>
                   <tbody>
                     {proveedores.map((p,i)=>(
-                      <tr key={p.id}>
+                      <tr key={p.id||i}>
                         <td>{i+1}</td><td>{p.nombre}</td><td>{p.producto}</td>
                         <td>{p.precio}</td><td>{p.entrega}</td><td>{p.contacto}</td>
-                      </tr>
-                    ))}
+                        <td><button className="btn btn-danger" onClick={()=>eliminarProveedor(p.id)}>🗑</button></td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
