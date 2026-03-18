@@ -30,8 +30,6 @@ async function importarExcel(req, res) {
         if (!categoria || !modelo) continue;
         if (typeof precio !== "number") continue;
         if (precio <= 0) continue;
-
-        // Saltar fila de cabecera
         if (String(categoria).toLowerCase().includes("categor")) continue;
 
         const data = JSON.stringify({
@@ -53,10 +51,7 @@ async function importarExcel(req, res) {
       }
     }
 
-    return res.json({
-      message: `Excel importado correctamente`,
-      total:   totalInsertados,
-    });
+    return res.json({ message: "Excel importado correctamente", total: totalInsertados });
 
   } catch (err) {
     console.error("[excel/importar]", err);
@@ -92,4 +87,43 @@ async function obtenerProductos(req, res) {
   }
 }
 
-module.exports = { importarExcel, obtenerProductos };
+async function agregarProducto(req, res) {
+  try {
+    const { categoria, marca, modelo, precio, stock } = req.body;
+    if (!categoria || !modelo) {
+      return res.status(400).json({ message: "Categoría y modelo son requeridos" });
+    }
+
+    const data = JSON.stringify({
+      categoria:    String(categoria).trim(),
+      modelo:       String(modelo).trim(),
+      precio_venta: Number(precio) || 0,
+      cantidad:     Number(stock)  || 0,
+      marca:        String(marca || "").trim(),
+    });
+
+    const [result] = await db.execute(
+      `INSERT INTO excel_records (filename, sheet_name, row_index, data, uploaded_by)
+       VALUES (?, ?, ?, ?, ?)`,
+      ["manual", categoria, 0, data, req.user?.id || null]
+    );
+
+    return res.status(201).json({ message: "Producto guardado", id: result.insertId });
+  } catch (err) {
+    console.error("[excel/agregar]", err);
+    return res.status(500).json({ message: "Error al guardar producto" });
+  }
+}
+
+async function eliminarProducto(req, res) {
+  try {
+    const { id } = req.params;
+    await db.execute("DELETE FROM excel_records WHERE id = ?", [id]);
+    return res.json({ message: "Producto eliminado" });
+  } catch (err) {
+    console.error("[excel/eliminar]", err);
+    return res.status(500).json({ message: "Error al eliminar producto" });
+  }
+}
+
+module.exports = { importarExcel, obtenerProductos, agregarProducto, eliminarProducto };

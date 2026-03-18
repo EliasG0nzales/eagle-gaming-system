@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors    = require("cors");
 
-const authRoutes = require("./routes/auth");
+const authRoutes  = require("./routes/auth");
 const excelRoutes = require("./routes/excel");
 
 const app  = express();
@@ -13,12 +13,13 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use("/api/excel", excelRoutes);
-
+// ── Middlewares PRIMERO ──
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/auth", authRoutes);
+// ── Rutas DESPUÉS ──
+app.use("/api/auth",  authRoutes);
+app.use("/api/excel", excelRoutes);
 
 app.get("/api/health", (req, res) => res.json({ status: "ok", ts: new Date() }));
 
