@@ -8,6 +8,8 @@ const excelRoutes = require("./routes/excel");
 const movimientosRoutes  = require("./routes/movimientos");
 const proveedoresRoutes  = require("./routes/proveedores");
 
+const chatRoutes = require("./routes/chat");
+
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
@@ -25,6 +27,7 @@ app.use("/api/auth",  authRoutes);
 app.use("/api/excel", excelRoutes);
 app.use("/api/movimientos", movimientosRoutes);
 app.use("/api/proveedores", proveedoresRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.get("/api/health", (req, res) => res.json({ status: "ok", ts: new Date() }));
 
