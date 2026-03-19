@@ -97,6 +97,10 @@ const styles = `
   .modal-input::placeholder { color: rgba(255,255,255,0.2); }
   .modal-select { background: #1c1c26; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #e8e8f0; font-family: "DM Mono",monospace; font-size: 13px; padding: 10px 14px; outline: none; width: 100%; }
   .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .typing-dots span { animation: blink 1.4s infinite; display: inline-block; }
+  .typing-dots span:nth-child(2) { animation-delay: .2s; }
+  .typing-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100% { opacity:0; } 40% { opacity:1; } }
   .chatbot { position: fixed; bottom: 24px; right: 24px; z-index: 200; }
   .chat-toggle { width: 52px; height: 52px; border-radius: 50%; background: #6c63ff; border: none; cursor: pointer; font-size: 22px; box-shadow: 0 4px 24px rgba(108,99,255,0.4); transition: transform .2s; display: flex; align-items: center; justify-content: center; }
   .chat-toggle:hover { transform: scale(1.08); }
@@ -105,7 +109,7 @@ const styles = `
   .chat-head { padding: 14px 16px; background: #1c1c26; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 10px; }
   .chat-head span { font-family: "Syne", sans-serif; font-size: 14px; font-weight: 600; color: #e8e8f0; }
   .chat-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; }
-  .chat-messages { height: 240px; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .chat-messages { height: 260px; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .chat-msg { max-width: 85%; padding: 8px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; }
   .chat-msg.bot { background: #1c1c26; color: #c8c8d8; align-self: flex-start; border-bottom-left-radius: 3px; }
   .chat-msg.user { background: #6c63ff; color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
@@ -136,16 +140,16 @@ const styles = `
 `;
 
 const inventarioInicial = [
-  { id:1,  categoria:"Tarjeta de Video", marca:"ASUS",     modelo:"Radeon RX 9070 XT OC",  precio:3299, stock:5  },
-  { id:2,  categoria:"Tarjeta de Video", marca:"GIGABYTE", modelo:"RTX 5070 WINDFORCE OC", precio:2920, stock:3  },
-  { id:3,  categoria:"Procesadores",     marca:"AMD",      modelo:"Ryzen 5 5600GT",         precio:569,  stock:8  },
-  { id:4,  categoria:"Procesadores",     marca:"Intel",    modelo:"Core i5-12400F",         precio:890,  stock:6  },
-  { id:5,  categoria:"Monitores",        marca:"ASUS",     modelo:"XG27AQDMG",              precio:2899, stock:2  },
-  { id:6,  categoria:"Monitores",        marca:"MSI",      modelo:"MAG 276CXF",             precio:539,  stock:7  },
-  { id:7,  categoria:"RAM",              marca:"CORSAIR",  modelo:"Vengeance DDR4 16GB",    precio:1000, stock:12 },
-  { id:8,  categoria:"Disco SSD",        marca:"KINGSTON", modelo:"NV3 1TB",                precio:495,  stock:9  },
-  { id:9,  categoria:"Placa Madre",      marca:"GIGABYTE", modelo:"Z790 Gaming X AX",       precio:1080, stock:4  },
-  { id:10, categoria:"Case",             marca:"ANTRYX",   modelo:"FX 650 ARGB",            precio:280,  stock:6  },
+  { id:1, categoria:"Tarjeta de Video", marca:"ASUS",    modelo:"Radeon RX 9070 XT OC",  precio:3299, stock:5 },
+  { id:2, categoria:"Tarjeta de Video", marca:"GIGABYTE",modelo:"RTX 5070 WINDFORCE OC", precio:2920, stock:3 },
+  { id:3, categoria:"Procesadores",     marca:"AMD",     modelo:"Ryzen 5 5600GT",         precio:569,  stock:8 },
+  { id:4, categoria:"Procesadores",     marca:"Intel",   modelo:"Core i5-12400F",         precio:890,  stock:6 },
+  { id:5, categoria:"Monitores",        marca:"ASUS",    modelo:"XG27AQDMG",              precio:2899, stock:2 },
+  { id:6, categoria:"Monitores",        marca:"MSI",     modelo:"MAG 276CXF",             precio:539,  stock:7 },
+  { id:7, categoria:"RAM",              marca:"CORSAIR", modelo:"Vengeance DDR4 16GB",    precio:1000, stock:12},
+  { id:8, categoria:"Disco SSD",        marca:"KINGSTON",modelo:"NV3 1TB",                precio:495,  stock:9 },
+  { id:9, categoria:"Placa Madre",      marca:"GIGABYTE",modelo:"Z790 Gaming X AX",       precio:1080, stock:4 },
+  { id:10,categoria:"Case",             marca:"ANTRYX",  modelo:"FX 650 ARGB",            precio:280,  stock:6 },
 ];
 
 const badgeClass = (cat) => {
@@ -232,7 +236,7 @@ export default function Dashboard() {
   const [seccion,       setSeccion]       = useState("inventario");
   const [datos,         setDatos]         = useState(inventarioInicial);
   const [chat,          setChat]          = useState(false);
-  const [msgs,          setMsgs]          = useState([{ from:"bot", text:"¡Hola! Soy el asistente Eagle Gaming 🎮" }]);
+  const [msgs,          setMsgs]          = useState([{ from:"bot", text:"¡Hola! Soy Eagle Bot 🎮 ¿En qué te ayudo?" }]);
   const [input,         setInput]         = useState("");
   const [importando,    setImportando]    = useState(false);
   const [toast,         setToast]         = useState(null);
@@ -240,19 +244,15 @@ export default function Dashboard() {
   const [filtrocat,     setFiltrocat]     = useState("Todas");
   const [modalAgregar,  setModalAgregar]  = useState(false);
   const [nuevoProducto, setNuevoProducto] = useState({ categoria:"", marca:"", modelo:"", precio:"", stock:"" });
-  const [proveedores,   setProveedores]   = useState([
-    { id:1, nombre:"TecnoDistrib SAC", producto:"GPUs",         precio:"2500-3000", entrega:"3-5 días", contacto:"ventas@tecnodistrib.com" },
-    { id:2, nombre:"PC Masters Perú",  producto:"Procesadores", precio:"500-1200",  entrega:"1-2 días", contacto:"pedidos@pcmasters.pe"    },
-  ]);
+  const [proveedores,   setProveedores]   = useState([]);
   const [nuevoProv,     setNuevoProv]     = useState({ nombre:"", producto:"", precio:"", entrega:"", contacto:"" });
-  const [movimientos,   setMovimientos]   = useState([
-    { id:1, fecha:"2026-03-10", producto:"RTX 5070 WINDFORCE OC", tipo:"Entrada", cantidad:3, costo:2920, responsable:"Admin" },
-    { id:2, fecha:"2026-03-12", producto:"Ryzen 5 5600GT",        tipo:"Salida",  cantidad:2, costo:569,  responsable:"Admin" },
-  ]);
-  const [nuevoMov, setNuevoMov] = useState({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
+  const [movimientos,   setMovimientos]   = useState([]);
+  const [nuevoMov,      setNuevoMov]      = useState({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
   const [filtroFecha,   setFiltroFecha]   = useState({ desde:"", hasta:"" });
   const STOCK_MINIMO = 5;
-useEffect(() => {
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
     const cargarProductos = async () => {
       try {
         const res  = await fetch(`${API}/api/excel/productos`, { headers:{ Authorization:`Bearer ${token}` } });
@@ -269,7 +269,7 @@ useEffect(() => {
         }
       } catch { console.log("Sin productos en BD"); }
     };
- 
+
     const cargarMovimientos = async () => {
       try {
         const res  = await fetch(`${API}/api/movimientos`, { headers:{ Authorization:`Bearer ${token}` } });
@@ -277,7 +277,7 @@ useEffect(() => {
         if (res.ok && data.movimientos?.length) setMovimientos(data.movimientos);
       } catch { console.log("Sin movimientos en BD"); }
     };
- 
+
     const cargarProveedores = async () => {
       try {
         const res  = await fetch(`${API}/api/proveedores`, { headers:{ Authorization:`Bearer ${token}` } });
@@ -285,11 +285,15 @@ useEffect(() => {
         if (res.ok && data.proveedores?.length) setProveedores(data.proveedores);
       } catch { console.log("Sin proveedores en BD"); }
     };
- 
+
     cargarProductos();
     cargarMovimientos();
     cargarProveedores();
   }, [token]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior:"smooth" });
+  }, [msgs]);
 
   const showToast = (msg, tipo="ok") => { setToast({msg,tipo}); setTimeout(()=>setToast(null),4000); };
 
@@ -316,129 +320,87 @@ useEffect(() => {
 
   const handleEdit = (id,campo,valor) => setDatos(datos.map(d=>d.id===id?{...d,[campo]:valor}:d));
   const handlePrint = () => window.print();
+
   const eliminarProducto = async (id) => {
-  try {
-    const res = await fetch(`${API}/api/excel/eliminar/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (res.ok) {
-      setDatos(datos.filter(d => d.id !== id));
-      showToast("🗑 Producto eliminado");
-    }
-  } catch {
-    showToast("❌ Error al eliminar", "error");
-  }
-};
+    try {
+      const res = await fetch(`${API}/api/excel/eliminar/${id}`, { method:"DELETE", headers:{ Authorization:`Bearer ${token}` } });
+      if (res.ok) { setDatos(datos.filter(d=>d.id!==id)); showToast("🗑 Producto eliminado"); }
+    } catch { showToast("❌ Error al eliminar","error"); }
+  };
 
   const agregarProducto = async () => {
-  if (!nuevoProducto.categoria || !nuevoProducto.modelo) return;
-  try {
-    const res = await fetch(`${API}/api/excel/agregar`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(nuevoProducto)
-    });
-    const data = await res.json();
-    if (res.ok) {
-      const nuevo = {
-        id:        data.id,
-        categoria: nuevoProducto.categoria,
-        marca:     nuevoProducto.marca || "—",
-        modelo:    nuevoProducto.modelo,
-        precio:    Number(nuevoProducto.precio) || 0,
-        stock:     Number(nuevoProducto.stock)  || 0,
-      };
-      setDatos([...datos, nuevo]);
-      setModalAgregar(false);
-      setNuevoProducto({ categoria:"", marca:"", modelo:"", precio:"", stock:"" });
-      showToast("✅ Producto guardado en la base de datos");
-    } else {
-      showToast("❌ Error: " + data.message, "error");
-    }
-  } catch {
-    showToast("❌ Error al conectar con el servidor", "error");
-  }
-};
+    if (!nuevoProducto.categoria || !nuevoProducto.modelo) return;
+    try {
+      const res = await fetch(`${API}/api/excel/agregar`, { method:"POST", headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`}, body:JSON.stringify(nuevoProducto) });
+      const data = await res.json();
+      if (res.ok) {
+        setDatos([...datos, { id:data.id, categoria:nuevoProducto.categoria, marca:nuevoProducto.marca||"—", modelo:nuevoProducto.modelo, precio:Number(nuevoProducto.precio)||0, stock:Number(nuevoProducto.stock)||0 }]);
+        setModalAgregar(false);
+        setNuevoProducto({ categoria:"", marca:"", modelo:"", precio:"", stock:"" });
+        showToast("✅ Producto guardado");
+      } else { showToast("❌ Error: "+data.message,"error"); }
+    } catch { showToast("❌ Error al conectar","error"); }
+  };
 
   const agregarProveedor = async () => {
-  if (!nuevoProv.nombre) return;
-  try {
-    const res = await fetch(`${API}/api/proveedores/agregar`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(nuevoProv)
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setProveedores([...proveedores, { ...nuevoProv, id: data.id }]);
-      setNuevoProv({ nombre:"", producto:"", precio:"", entrega:"", contacto:"" });
-      showToast("✅ Proveedor agregado");
-    } else {
-      showToast("❌ Error: " + data.message, "error");
-    }
-  } catch {
-    showToast("❌ Error al conectar", "error");
-  }
-};  
+    if (!nuevoProv.nombre) return;
+    try {
+      const res = await fetch(`${API}/api/proveedores/agregar`, { method:"POST", headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`}, body:JSON.stringify(nuevoProv) });
+      const data = await res.json();
+      if (res.ok) {
+        setProveedores([...proveedores, {...nuevoProv, id:data.id}]);
+        setNuevoProv({ nombre:"", producto:"", precio:"", entrega:"", contacto:"" });
+        showToast("✅ Proveedor agregado");
+      } else { showToast("❌ Error: "+data.message,"error"); }
+    } catch { showToast("❌ Error al conectar","error"); }
+  };
 
   const eliminarProveedor = async (id) => {
     try {
       const res = await fetch(`${API}/api/proveedores/${id}`, { method:"DELETE", headers:{ Authorization:`Bearer ${token}` } });
-    if (res.ok) { setProveedores(proveedores.filter(p=>p.id!==id)); showToast("🗑 Proveedor eliminado"); }
-  } catch { showToast("❌ Error al eliminar","error"); }
-};
-
-  const agregarMovimiento = async () => {
-  if (!nuevoMov.producto || !nuevoMov.cantidad) return;
-  try {
-    const res = await fetch(`${API}/api/movimientos/agregar`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(nuevoMov)
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setMovimientos([...movimientos, { ...nuevoMov, id: data.id, cantidad: Number(nuevoMov.cantidad), costo: Number(nuevoMov.costo) }]);
-      setNuevoMov({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
-      showToast("✅ Movimiento registrado");
-    } else {
-      showToast("❌ Error: " + data.message, "error");
-    }
-  } catch {
-    showToast("❌ Error al conectar", "error");
-  }
-};
-
-  const botRespuestas = {
-    "hola":       "¡Hola! Soy el asistente de Eagle Gaming 🎮 ¿En qué te ayudo?",
-    "inventario": `Tenemos ${datos.length} productos en ${[...new Set(datos.map(d=>d.categoria))].length} categorías.`,
-    "precio":     `Precios desde S/ ${Math.min(...datos.map(d=>d.precio||0))} hasta S/ ${Math.max(...datos.map(d=>d.precio||0))}.`,
-    "stock":      `Stock total: ${datos.reduce((a,b)=>a+(b.stock||0),0)} unidades. Valor: S/ ${datos.reduce((a,b)=>a+(b.precio||0)*(b.stock||0),0).toLocaleString()}.`,
-    "proveedor":  `Tenemos ${proveedores.length} proveedores registrados.`,
-    "movimiento": `Hay ${movimientos.length} movimientos registrados.`,
-    "default":    "Puedo ayudarte con inventario, precios, stock, proveedores y movimientos.",
+      if (res.ok) { setProveedores(proveedores.filter(p=>p.id!==id)); showToast("🗑 Proveedor eliminado"); }
+    } catch { showToast("❌ Error al eliminar","error"); }
   };
 
-  const handleSend = () => {
+  const agregarMovimiento = async () => {
+    if (!nuevoMov.producto || !nuevoMov.cantidad) return;
+    try {
+      const res = await fetch(`${API}/api/movimientos/agregar`, { method:"POST", headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`}, body:JSON.stringify(nuevoMov) });
+      const data = await res.json();
+      if (res.ok) {
+        setMovimientos([...movimientos, {...nuevoMov, id:data.id, cantidad:Number(nuevoMov.cantidad), costo:Number(nuevoMov.costo)}]);
+        setNuevoMov({ fecha:"", producto:"", tipo:"Entrada", cantidad:"", costo:"", responsable:"" });
+        showToast("✅ Movimiento registrado");
+      } else { showToast("❌ Error: "+data.message,"error"); }
+    } catch { showToast("❌ Error al conectar","error"); }
+  };
+
+  const handleSend = async () => {
     if (!input.trim()) return;
-    const userMsg = input.trim().toLowerCase();
-    setMsgs(m=>[...m,{from:"user",text:input.trim()}]);
+    const userMsg = input.trim();
+    setMsgs(m => [...m, { from:"user", text:userMsg }]);
     setInput("");
-    setTimeout(()=>{ const key=Object.keys(botRespuestas).find(k=>userMsg.includes(k))||"default"; setMsgs(m=>[...m,{from:"bot",text:botRespuestas[key]}]); },600);
+    setMsgs(m => [...m, { from:"bot", text:"...", typing:true }]);
+
+    try {
+      const res = await fetch(`${API}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({
+          mensaje:     userMsg,
+          inventario:  datos,
+          movimientos: movimientos,
+          proveedores: proveedores,
+        })
+      });
+      const data = await res.json();
+      setMsgs(m => [...m.filter(x => !x.typing), { from:"bot", text: data.respuesta || "❌ Sin respuesta" }]);
+    } catch {
+      setMsgs(m => [...m.filter(x => !x.typing), { from:"bot", text:"❌ Error al conectar con la IA" }]);
+    }
   };
 
   const categoriasList = ["Todas", ...new Set(datos.map(d=>d.categoria))];
-  // Movimientos filtrados por fecha
   const movimientosFiltrados = movimientos.filter(m => {
     if (!filtroFecha.desde && !filtroFecha.hasta) return true;
     const fecha = m.fecha || "";
@@ -446,10 +408,7 @@ useEffect(() => {
     if (filtroFecha.hasta && fecha > filtroFecha.hasta) return false;
     return true;
   });
-  
-  // Alertas de stock minimo
-  const productosStockBajo = datos.filter(d => (d.stock||0) <= STOCK_MINIMO && (d.stock||0) >= 0);
-  
+  const productosStockBajo = datos.filter(d => (d.stock||0) <= STOCK_MINIMO);
   const datosFiltrados = datos.filter(d => {
     const matchCat = filtrocat==="Todas" || d.categoria===filtrocat;
     const matchQ   = busqueda==="" || (d.modelo||"").toLowerCase().includes(busqueda.toLowerCase()) || (d.marca||"").toLowerCase().includes(busqueda.toLowerCase()) || (d.categoria||"").toLowerCase().includes(busqueda.toLowerCase());
@@ -473,7 +432,6 @@ useEffect(() => {
       <style>{styles}</style>
       {toast && <div className={`toast ${toast.tipo==="error"?"error":""}`}>{toast.msg}</div>}
 
-      {/* MODAL AGREGAR */}
       {modalAgregar && (
         <div className="modal-overlay" onClick={e=>e.target.className==="modal-overlay"&&setModalAgregar(false)}>
           <div className="modal">
@@ -548,7 +506,6 @@ useEffect(() => {
             <div className="stat-card" style={{borderColor:"#f472b6"}}><div className="stat-card__label">Categorías</div><div className="stat-card__value">{totalCats}</div><div className="stat-card__sub">tipos</div></div>
           </div>
 
-          {/* ── INVENTARIO ── */}
           {seccion==="inventario" && (
             <div className="table-section">
               <div className="table-header">
@@ -592,48 +549,49 @@ useEffect(() => {
 
           {seccion==="graficos" && <Graficos datos={datos}/>}
 
-          {/* ── ENTRADAS Y SALIDAS ── */}
           {seccion==="entradas" && (
             <div>
               {productosStockBajo.length > 0 && (
                 <div className="alerta-stock">
                   <h4>⚠️ Alerta de stock mínimo — {productosStockBajo.length} productos</h4>
-                  {productosStockBajo.map(p => (
+                  {productosStockBajo.slice(0,10).map(p => (
                     <div key={p.id}>• {p.categoria} — {p.modelo} — Stock: {p.stock} unidades</div>
-                    ))}
-                    </div>
-                  )}
-                  <div className="table-section">
-                    <div className="table-header">
-                      <h2>Registro de movimientos ({movimientosFiltrados.length})</h2>
-                      <div className="table-actions"><button className="btn btn-print" onClick={handlePrint}>🖨 Imprimir</button></div>
-                      </div>
-                      <div className="mov-form">
-                        <input className="prov-input" placeholder="Fecha (ej: 2026-03-18)" value={nuevoMov.fecha} onChange={e=>setNuevoMov({...nuevoMov,fecha:e.target.value})}/>
-                        <input className="prov-input" placeholder="Producto" value={nuevoMov.producto} onChange={e=>setNuevoMov({...nuevoMov,producto:e.target.value})}/>
-                        <select className="mov-select" value={nuevoMov.tipo} onChange={e=>setNuevoMov({...nuevoMov,tipo:e.target.value})}><option>Entrada</option><option>Salida</option></select>
-                        <input className="prov-input" placeholder="Cantidad" type="number" value={nuevoMov.cantidad} onChange={e=>setNuevoMov({...nuevoMov,cantidad:e.target.value})}/>
-                        <input className="prov-input" placeholder="Costo S/" type="number" value={nuevoMov.costo} onChange={e=>setNuevoMov({...nuevoMov,costo:e.target.value})}/>
-                        <input className="prov-input" placeholder="Responsable" value={nuevoMov.responsable} onChange={e=>setNuevoMov({...nuevoMov,responsable:e.target.value})}/>
-                        <button className="btn btn-primary" style={{gridColumn:"1/-1"}} onClick={agregarMovimiento}>+ Registrar movimiento</button>
-                        </div>
-                        <div className="filtro-fecha">
-                        <label>Filtrar por fecha:</label>
-                         <input type="date" value={filtroFecha.desde} onChange={e=>setFiltroFecha({...filtroFecha,desde:e.target.value})}/>
-                        <label>hasta</label>
-                         <input type="date" value={filtroFecha.hasta} onChange={e=>setFiltroFecha({...filtroFecha,hasta:e.target.value})}/>
-                        <button className="btn btn-outline" onClick={()=>setFiltroFecha({desde:"",hasta:""})}>✕ Limpiar</button>
-                   </div>
-                   <div className="table-wrap">
-                    <table>
-                        <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Costo S/</th><th>Responsable</th></tr></thead>
+                  ))}
+                  {productosStockBajo.length > 10 && <div>...y {productosStockBajo.length - 10} más</div>}
+                </div>
+              )}
+              <div className="table-section">
+                <div className="table-header">
+                  <h2>Registro de movimientos ({movimientosFiltrados.length})</h2>
+                  <div className="table-actions"><button className="btn btn-print" onClick={handlePrint}>🖨 Imprimir</button></div>
+                </div>
+                <div className="mov-form">
+                  <input className="prov-input" placeholder="Fecha (ej: 2026-03-18)" value={nuevoMov.fecha} onChange={e=>setNuevoMov({...nuevoMov,fecha:e.target.value})}/>
+                  <input className="prov-input" placeholder="Producto" value={nuevoMov.producto} onChange={e=>setNuevoMov({...nuevoMov,producto:e.target.value})}/>
+                  <select className="mov-select" value={nuevoMov.tipo} onChange={e=>setNuevoMov({...nuevoMov,tipo:e.target.value})}><option>Entrada</option><option>Salida</option></select>
+                  <input className="prov-input" placeholder="Cantidad" type="number" value={nuevoMov.cantidad} onChange={e=>setNuevoMov({...nuevoMov,cantidad:e.target.value})}/>
+                  <input className="prov-input" placeholder="Costo S/" type="number" value={nuevoMov.costo} onChange={e=>setNuevoMov({...nuevoMov,costo:e.target.value})}/>
+                  <input className="prov-input" placeholder="Responsable" value={nuevoMov.responsable} onChange={e=>setNuevoMov({...nuevoMov,responsable:e.target.value})}/>
+                  <button className="btn btn-primary" style={{gridColumn:"1/-1"}} onClick={agregarMovimiento}>+ Registrar movimiento</button>
+                </div>
+                <div className="filtro-fecha">
+                  <label>Filtrar por fecha:</label>
+                  <input type="date" value={filtroFecha.desde} onChange={e=>setFiltroFecha({...filtroFecha,desde:e.target.value})}/>
+                  <label>hasta</label>
+                  <input type="date" value={filtroFecha.hasta} onChange={e=>setFiltroFecha({...filtroFecha,hasta:e.target.value})}/>
+                  <button className="btn btn-outline" onClick={()=>setFiltroFecha({desde:"",hasta:""})}>✕ Limpiar</button>
+                </div>
+                <div className="table-wrap">
+                  <table>
+                    <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Costo S/</th><th>Responsable</th></tr></thead>
                     <tbody>
-                      {movimientosFiltrados.map((m,i)=>(<tr key={m.id||i}>
-                        <td>{m.fecha}</td><td>{m.producto}</td>
-                        <td><span className={`badge ${m.tipo==="Entrada"?"badge-monitor":"badge-gpu"}`}>{m.tipo}</span></td>
-                        <td>{m.cantidad}</td><td>S/ {(Number(m.costo)||0).toLocaleString()}</td><td>{m.responsable}</td>
+                      {movimientosFiltrados.map((m,i)=>(
+                        <tr key={m.id||i}>
+                          <td>{m.fecha}</td><td>{m.producto}</td>
+                          <td><span className={`badge ${m.tipo==="Entrada"?"badge-monitor":"badge-gpu"}`}>{m.tipo}</span></td>
+                          <td>{m.cantidad}</td><td>S/ {(Number(m.costo)||0).toLocaleString()}</td><td>{m.responsable}</td>
                         </tr>
-                       ))}
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -641,7 +599,6 @@ useEffect(() => {
             </div>
           )}
 
-          {/* ── PROVEEDORES ── */}
           {seccion==="proveedores" && (
             <div className="table-section">
               <div className="table-header">
@@ -665,8 +622,8 @@ useEffect(() => {
                         <td>{i+1}</td><td>{p.nombre}</td><td>{p.producto}</td>
                         <td>{p.precio}</td><td>{p.entrega}</td><td>{p.contacto}</td>
                         <td><button className="btn btn-danger" onClick={()=>eliminarProveedor(p.id)}>🗑</button></td>
-                        </tr>
-                      ))}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -677,9 +634,14 @@ useEffect(() => {
         <div className="chatbot">
           {chat && (
             <div className="chat-window">
-              <div className="chat-head"><div className="chat-dot"/><span>Asistente Eagle Gaming</span></div>
+              <div className="chat-head"><div className="chat-dot"/><span>Eagle Bot 🤖</span></div>
               <div className="chat-messages">
-                {msgs.map((m,i)=>(<div key={i} className={`chat-msg ${m.from}`}>{m.text}</div>))}
+                {msgs.map((m,i)=>(
+                  <div key={i} className={`chat-msg ${m.from}`}>
+                    {m.typing ? <span className="typing-dots"><span>●</span><span>●</span><span>●</span></span> : m.text}
+                  </div>
+                ))}
+                <div ref={chatEndRef}/>
               </div>
               <div className="chat-input-row">
                 <input className="chat-input" placeholder="Pregunta sobre el inventario..." value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSend()}/>
