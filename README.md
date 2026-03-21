@@ -488,3 +488,5 @@ of this software to use, copy, modify, and distribute freely.
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=EliasG0nzales.eagle-gaming-system)
 
 </div>
+#   E a g l e _ G a m e r _ P E R U  
+ 
